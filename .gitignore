@@ -1,0 +1,14 @@
+BlackWireClient/build/classes
+BlackWireClient/build/distributions
+BlackWireClient/build/generated
+BlackWireClient/build/scripts
+BlackWireClient/build/tmp
+BlackWireClient/.idea/
+BlackWireClient/.gradle/
+BlackWireServer/build/classes
+BlackWireServer/build/distributions
+BlackWireServer/build/generated
+BlackWireServer/build/scripts
+BlackWireServer/build/tmp
+BlackWireServer/.idea/
+BlackWireServer/.gradle/
