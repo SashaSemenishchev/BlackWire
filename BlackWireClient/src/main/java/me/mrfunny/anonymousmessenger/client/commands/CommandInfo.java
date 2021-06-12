@@ -1,4 +1,4 @@
-package me.mrfunny.anonymousmessenger.client.command;
+package me.mrfunny.anonymousmessenger.client.commands;
 
 public class CommandInfo {
     private final String command;

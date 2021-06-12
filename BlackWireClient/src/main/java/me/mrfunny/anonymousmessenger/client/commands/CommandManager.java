@@ -1,18 +1,11 @@
-package me.mrfunny.anonymousmessenger.client.command;
+package me.mrfunny.anonymousmessenger.client.commands;
+
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Consumer;
 
 public class CommandManager {
     private final HashMap<CommandInfo, Runnable> commands = new HashMap<>();
-
-    public CommandManager(){
-        registerCommand(command("/help", "shows this message"), () -> {
-            for(CommandInfo commandInfo : commands.keySet()){
-                System.out.println(commandInfo.getCommand() + " - " + commandInfo.getDescription());
-            }
-        });
-    }
 
     public void registerCommand(CommandInfo command, Runnable commandRunnable){
         commands.put(command, commandRunnable);
@@ -34,5 +27,9 @@ public class CommandManager {
             return true;
         }
         return false;
+    }
+
+    public HashMap<CommandInfo, Runnable> getCommands() {
+        return commands;
     }
 }
