@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -30,8 +29,8 @@ public class RSAUtil {
         return keyFactory.generatePrivate(spec);
     }
 
-    public static String fromPublicKeyToString(PublicKey privateKey){
-        return Base64.getEncoder().encodeToString(privateKey.getEncoded());
+    public static String fromPublicKeyToString(PublicKey publicKey){
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
     }
 
     public static PublicKey fromStringToPublicKey(String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -40,9 +39,9 @@ public class RSAUtil {
         return keyFactory.generatePublic(spec);
     }
 
-    public static String encrypt(PublicKey key, String string) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public static String encrypt(PublicKey publicKey, String string) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
+        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
         return encoder.encodeToString(cipher.doFinal(string.getBytes(StandardCharsets.UTF_8)));
     }
 
@@ -52,7 +51,7 @@ public class RSAUtil {
         if(file.isDirectory()){
             throw new NotFileException();
         }
-        return encoder.encodeToString(cipher.doFinal(Files.readAllBytes(Paths.get(file.getAbsolutePath()))));
+        return encoder.encodeToString(cipher.doFinal(Files.readAllBytes(file.toPath())));
     }
 
     public static String decrypt(PrivateKey privateKey, String string) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {

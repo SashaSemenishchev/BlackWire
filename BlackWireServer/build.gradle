@@ -1,10 +1,15 @@
 plugins {
     id 'java'
     id 'application'
+    id "com.github.johnrengelman.shadow" version "6.1.0"
 }
 
 application {
     mainClass = 'me.mrfunny.anonymousmessenger.server.Main'
+}
+
+shadow {
+    mainClassName = "me.mrfunny.anonymousmessenger.server.Main"
 }
 
 group 'me.mrfunny.anonymousmessenger.server'
@@ -17,9 +22,10 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-    implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.34.0'
-
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+    compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.34.0'
+    compile 'com.auth0:java-jwt:3.16.0'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.15'
 }
 
 jar {
