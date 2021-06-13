@@ -4,6 +4,7 @@ package me.mrfunny.anonymousmessenger.client.socket;
 import me.mrfunny.anonymousmessenger.client.Main;
 import me.mrfunny.anonymousmessenger.client.commands.CommandInfo;
 import me.mrfunny.anonymousmessenger.client.commands.CommandManager;
+import me.mrfunny.anonymousmessenger.client.util.RSAUtil;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -42,9 +43,7 @@ public class MessengerSocket {
 
             });
             String publicKeyString = sendPacket("{\"action\": \"publickey\"}");
-            Cipher cipher = Cipher.getInstance("RSA");
-            PublicKey publicKey = KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyString.getBytes(StandardCharsets.UTF_8))));
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            PublicKey publicKey = RSAUtil.fromStringToPublicKey(publicKeyString);
             HashMap<String, String> payload = new HashMap<>();
             if(data.containsKey("token")){
                 payload.put("action", "auth");
@@ -52,13 +51,13 @@ public class MessengerSocket {
             } else if(data.containsKey("repeatPassword")) {
                 payload.put("action", "register");
                 payload.put("username", data.get("username").toString());
-                payload.put("password", new String(cipher.doFinal(data.get("repeatPassword").toString().getBytes(StandardCharsets.UTF_8))));
+                payload.put("password", RSAUtil.encrypt(publicKey, data.get("password").toString()));
             } else {
                 payload.put("action", "validateUsername");
                 payload.put("username", data.get("username").toString());
-                payload.put("password", new String(cipher.doFinal(data.get("password").toString().getBytes(StandardCharsets.UTF_8))));
+                payload.put("password", RSAUtil.encrypt(publicKey, data.get("password").toString()));
             }
-            payload.put("publickey", new String(Main.getPublicKey().getEncoded(), StandardCharsets.UTF_8));
+            payload.put("publickey", Base64.getEncoder().encodeToString(Main.getPublicKey().getEncoded()));
             String response = sendPacket(new JSONObject(payload).toJSONString()); // all types of response might be token.
             if(response.toLowerCase().contains("error")){
                 System.out.println(response);
@@ -67,7 +66,7 @@ public class MessengerSocket {
             }
             Cipher cipher1 = Cipher.getInstance("RSA");
             cipher1.init(Cipher.DECRYPT_MODE, Main.getPrivateKey());
-            Main.getProperties().setProperty("token", new String(cipher1.doFinal(response.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8));
+            Main.getProperties().setProperty("token", new String(cipher1.doFinal(response.getBytes(StandardCharsets.UTF_8))));
             loggedIn = true;
             System.out.println("You logged in! Change chat using /chat username");
         } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeySpecException exception) {
@@ -126,6 +125,6 @@ public class MessengerSocket {
         } catch (IOException exception) {
             exception.printStackTrace();
         }
-        return new String(encoded, StandardCharsets.UTF_8).replaceAll("\n", "").replaceAll("\r", "");
+        return new String(encoded).replaceAll("\n", "").replaceAll("\r", "");
     }
 }

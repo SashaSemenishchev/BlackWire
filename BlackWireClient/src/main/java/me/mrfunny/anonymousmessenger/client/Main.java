@@ -7,33 +7,30 @@ import org.json.simple.parser.ParseException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 
 import static me.mrfunny.anonymousmessenger.client.socket.MessengerSocket.readFile;
 
 public class Main {
     private final static JSONParser parser = new JSONParser();
-    private static Properties properties;
+    private static final Properties properties = new Properties();
     private static KeyPairGenerator generator;
     private static PublicKey publicKey;
     private static PrivateKey privateKey;
+    private static File mainFolder = new File(System.getProperty("user.home") + File.separator + ".blackwire");
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048);
         File propertiesFile = new File(System.getProperty("user.home") + File.separator + ".blackwire" + File.separator + "client.properties");
-        File propertiesFolder = new File(System.getProperty("user.home") + File.separator + ".blackwire");
-        propertiesFolder.mkdirs();
-        //        if(true){
-//            return;
-//        }
+        if(!mainFolder.exists()){
+            mainFolder.mkdirs();
+        }
         String host = null;
         String token = null;
         if(!propertiesFile.exists()){
@@ -58,22 +55,29 @@ public class Main {
             System.out.println("Enter host:port of message server: ");
             properties.setProperty("host", console.readLine());
         }
-        if(properties.contains("publicKey") && properties.contains("privateKey")){
+        File privateKeyFile = new File(mainFolder.getAbsolutePath() + File.separator + "private.dem");
+        File publicKeyFile = new File(mainFolder.getAbsolutePath() + File.separator + "public.dem");
+        if(privateKeyFile.exists() && publicKeyFile.exists()){
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(Base64.getDecoder().decode(properties.getProperty("publicKey").getBytes(StandardCharsets.UTF_8))));
-            privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(properties.getProperty("privateKey").getBytes(StandardCharsets.UTF_8))));
+            X509EncodedKeySpec publicSpec = new X509EncodedKeySpec(Files.readAllBytes(publicKeyFile.toPath()));
+            publicKey = keyFactory.generatePublic(publicSpec);
+            PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(Files.readAllBytes(privateKeyFile.toPath()));
+            privateKey = keyFactory.generatePrivate(privateSpec);
         } else {
             KeyPair keyPair = generator.generateKeyPair();
-            properties.setProperty("publicKey", new String(keyPair.getPublic().getEncoded(), StandardCharsets.UTF_8));
-            properties.setProperty("privateKey", new String(keyPair.getPrivate().getEncoded(), StandardCharsets.UTF_8));
+            try (FileOutputStream fos = new FileOutputStream(privateKeyFile)){
+                fos.write(keyPair.getPrivate().getEncoded());
+            }
+            try (FileOutputStream fos = new FileOutputStream(publicKeyFile)){
+                fos.write(keyPair.getPublic().getEncoded());
+            }
         }
-        PrintWriter writer = new PrintWriter(propertiesFile);
-        properties.store(writer, null);
+
         try {
             HashMap<String, String> payload = new HashMap<>();
             if(token == null){
                 String choice = console.readLine();
-                System.out.println("Enter your username (username starts with @): ");
+                System.out.println("Enter your username (registration): ");
                 payload.put("username", console.readLine().trim().intern());
                 System.out.println("Enter your password: ");
                 String password = new String(console.readPassword());
@@ -89,6 +93,9 @@ public class Main {
             } else {
                 payload.put("token", token);
             }
+            PrintWriter writer = new PrintWriter(propertiesFile);
+            properties.store(writer, null);
+            writer.close();
             MessengerSocket socket = new MessengerSocket("localhost", 6666, new JSONObject(payload));
             socket.stopConnection();
         } catch (IOException exception) {
