@@ -1,15 +1,10 @@
 plugins {
     id 'java'
     id 'application'
-    id "com.github.johnrengelman.shadow" version "6.1.0"
 }
 
-shadow {
-    mainClassName = "me.mrfunny.anonymousmessenger.client.Main"
-}
-
-group 'org.example'
-version '1.0-SNAPSHOT'
+group 'me.mrfunny.blackwire.client'
+version '1.0'
 
 repositories {
     mavenCentral()
@@ -18,16 +13,6 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-}
-
-jar {
-    manifest {
-        attributes(
-                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'me.mrfunny.anonymousmessenger.client.Main'
-        )
-    }
 }
 
 test {
