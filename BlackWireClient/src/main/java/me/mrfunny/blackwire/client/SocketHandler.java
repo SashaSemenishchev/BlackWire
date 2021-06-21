@@ -75,6 +75,7 @@ public class SocketHandler implements Runnable {
                 });
                 return;
             }
+
             // TODO: Save token, show chat window etc.
             while(socket.isConnected()){
                 Message message = (Message) in.readObject();
