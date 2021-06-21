@@ -4,7 +4,7 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import me.mrfunny.blackwire.socket.message.Message;
 import me.mrfunny.blackwire.socket.message.MessageType;
-import me.mrfunny.blackwire.util.RSAUtil;
+import me.mrfunny.util.RSAUtil;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -21,16 +21,23 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class SocketHandler implements Runnable {
-    private final int port;
-    private final String host;
-    private final HashMap<String, Object> data;
-    private Socket socket;
-    private ObjectInputStream in;
-    private ObjectOutputStream out;
 
-    public SocketHandler(String host, int port, HashMap<String, Object> data) throws IOException {
-        this.host = host;
-        this.port = port;
+    private HashMap<String, Object> data;
+    private final Socket socket;
+    private final ObjectInputStream in;
+    private final ObjectOutputStream out;
+
+    public SocketHandler(String host, int port) throws IOException {
+        socket = new Socket(host, port);
+        in = new ObjectInputStream(socket.getInputStream());
+        out = new ObjectOutputStream(socket.getOutputStream());
+    }
+
+    public HashMap<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(HashMap<String, Object> data) {
         this.data = data;
     }
 
@@ -73,6 +80,7 @@ public class SocketHandler implements Runnable {
                     alert.setHeaderText(tokenResponse.getMessage());
                     alert.showAndWait();
                 });
+                System.exit(-1);
                 return;
             }
 

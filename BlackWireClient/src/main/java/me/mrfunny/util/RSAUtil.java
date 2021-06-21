@@ -1,4 +1,4 @@
-package me.mrfunny.blackwire.util;
+package me.mrfunny.util;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -58,5 +58,15 @@ public class RSAUtil {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
         return new String(cipher.doFinal(decoder.decode(string)), StandardCharsets.UTF_8);
+    }
+
+    public static PrivateKey readPrivateFromFile(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(Files.readAllBytes(file.toPath()));
+        return KeyFactory.getInstance("RSA").generatePrivate(spec);
+    }
+
+    public static PublicKey readPublicFromFile(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(Files.readAllBytes(file.toPath()));
+        return KeyFactory.getInstance("RSA").generatePublic(spec);
     }
 }

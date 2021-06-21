@@ -1,4 +1,4 @@
-package me.mrfunny.blackwire.util;
+package me.mrfunny.util;
 
 public class NotFileException extends Exception{
 }

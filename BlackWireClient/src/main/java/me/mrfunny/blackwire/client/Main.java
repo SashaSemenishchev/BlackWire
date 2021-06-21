@@ -1,6 +1,7 @@
 package me.mrfunny.blackwire.client;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -8,11 +9,12 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
+import me.mrfunny.util.RSAUtil;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Objects;
@@ -31,6 +33,7 @@ public class Main extends Application {
     private static String id;
     private static PublicKey publicKey;
     private static PrivateKey privateKey;
+    private static SocketHandler socket;
 
     public static String getHost() {
         return host;
@@ -56,37 +59,102 @@ public class Main extends Application {
         return basePath;
     }
 
+    public void error(Exception exception){
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("An error occurred");
+            alert.setContentText(ExceptionUtils.getStackTrace(exception));
+            alert.showAndWait();
+        });
+    }
+
+    public void error(String error){
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("An error occurred");
+            alert.setContentText(error);
+            alert.showAndWait();
+        });
+    }
+
+    public void askForHost(){
+        do {
+            try {
+                TextInputDialog textInputDialog = new TextInputDialog();
+                textInputDialog.setHeaderText("Host value not found");
+                textInputDialog.setContentText("Enter host:port of message server: ");
+                Optional<String> resultOptional = textInputDialog.showAndWait();
+                if (resultOptional.isPresent()) {
+                    host = resultOptional.get();
+                    id = host.replaceAll(":", "").replaceAll("\\.", "_");
+                } else {
+                    System.exit(0);
+                    return;
+                }
+
+                String[] hostData = host.split(":");
+                socket = new SocketHandler(hostData[0], Integer.parseInt(hostData[1])); // Connection to socket at this point is for validating data. Main loop starts when client receive token from server
+                break;
+            } catch (Exception exception) {
+                error(exception);
+            }
+        } while (true);
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
         stage.setTitle("BlackWire");
         // Check and show user any error
         if(errorMessage != null){
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setHeaderText("Error on starting application");
-            alert.setContentText(errorMessage);
-            alert.showAndWait();
-            System.exit(-1);
+            error(errorMessage);
             return;
         }
 
         // Show dialog for entering host and port of message server
-        if(askServer){
-            TextInputDialog textInputDialog = new TextInputDialog();
-            textInputDialog.setHeaderText("Host value not found");
-            textInputDialog.setContentText("Enter host:port of message server: ");
-            Optional<String> resultOptional = textInputDialog.showAndWait();
-            if(resultOptional.isPresent()){
-                host = resultOptional.get();
-                id = host.replaceAll(":", "").replaceAll("\\.", "_");
-            } else {
-                System.exit(0);
-                return;
+        if(askServer) {
+            askForHost();
+        } else {
+            host = properties.getProperty("host");
+            id = host.replaceAll(":", "").replaceAll("\\.", "_");
+            String[] hostData = host.split(":");
+            int tries = 0;
+            do {
+                try {
+                    socket = new SocketHandler(hostData[0], Integer.parseInt(hostData[1]));
+                    break;
+                } catch (Exception exception){
+                    if(tries == 3){
+                        error(exception);
+                        askForHost();
+                        break;
+                    }
+                    tries++;
+                }
+            } while(tries < 4);
+        }
+
+        File publicKeyFile = new File(basePath + File.separator + "public.key");
+        File privateKeyFile = new File(basePath + File.separator + "private.key");
+        if(privateKeyFile.exists() && publicKeyFile.exists()){
+            privateKey = RSAUtil.readPrivateFromFile(privateKeyFile);
+            publicKey = RSAUtil.readPublicFromFile(publicKeyFile);
+        } else {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(2048);
+            KeyPair keyPair = generator.generateKeyPair();
+            privateKey = keyPair.getPrivate();
+            publicKey = keyPair.getPublic();
+            try(FileOutputStream fos = new FileOutputStream(privateKeyFile)){
+                fos.write(privateKey.getEncoded());
+            }
+
+            try(FileOutputStream fos = new FileOutputStream(publicKeyFile)){
+                fos.write(publicKey.getEncoded());
             }
         }
 
-        // TODO check for private and public keys.
-
-        // Show dialog, that asks user for login or registration
         if(loadIntoSetup){
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             ButtonType login = new ButtonType("Login", ButtonBar.ButtonData.YES);

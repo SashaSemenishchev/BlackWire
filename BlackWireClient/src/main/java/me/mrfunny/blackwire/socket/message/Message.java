@@ -10,6 +10,7 @@ public class Message {
     private HashMap<String, Object> additionalData = new HashMap<>();
     private String action;
     private String message;
+    private String encryptionKey;
 
     public Message(MessageType messageType, byte[] content) {
         this.messageType = messageType;
@@ -34,6 +35,14 @@ public class Message {
         this.messageType = messageType;
         this.action = action;
         this.additionalData = data;
+    }
+
+    public String getEncryptionKey() {
+        return encryptionKey;
+    }
+
+    public void setEncryptionKey(String encryptionKey) {
+        this.encryptionKey = encryptionKey;
     }
 
     public void setMessage(String message) {
