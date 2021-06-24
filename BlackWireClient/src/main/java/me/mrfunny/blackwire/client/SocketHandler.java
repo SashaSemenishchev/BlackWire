@@ -4,21 +4,25 @@ import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import me.mrfunny.blackwire.socket.message.Message;
 import me.mrfunny.blackwire.socket.message.MessageType;
+import me.mrfunny.util.AESUtil;
+import me.mrfunny.util.NotFileException;
 import me.mrfunny.util.RSAUtil;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 
 public class SocketHandler implements Runnable {
 
@@ -41,11 +45,38 @@ public class SocketHandler implements Runnable {
         this.data = data;
     }
 
+    public static String shuffleString(String string) {
+        List<String> letters = Arrays.asList(string.split(""));
+        Collections.shuffle(letters);
+        StringBuilder builder = new StringBuilder();
+        for (String letter : letters) {
+            builder.append(letter);
+        }
+        return builder.toString();
+    }
+
+    public void sendMessage(String message, String receiver) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException, InvalidKeySpecException {
+        this.sendMessage(message.getBytes(StandardCharsets.UTF_8), receiver);
+    }
+
+    public void sendMessage(byte[] message, String receiver) throws IOException, ClassNotFoundException, NoSuchAlgorithmException, IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchPaddingException, InvalidKeySpecException {
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("username", receiver);
+        Message response = sendPacketMessage(new Message(MessageType.ACTION, "publickey", payload));
+        Message messageToSend = new Message(MessageType.TEXT);
+        String password = shuffleString(UUID.randomUUID().toString() + RandomStringUtils.randomAlphanumeric(64));
+        SecretKey secretKey = AESUtil.getKeyFromPassword(password);
+        messageToSend.setMessage(AESUtil.encrypt(message, secretKey));
+        messageToSend.setEncryptionKey(RSAUtil.encrypt(response.getPublicKey(), password));
+        out.writeObject(messageToSend);
+    }
+
+
     @Override
     public void run() {
         try {
             Message response = sendPacketMessage(new Message(MessageType.ACTION, "publickey"));
-            PublicKey serverPublic = RSAUtil.fromStringToPublicKey(response.getMessage());
+            PublicKey serverPublic = response.getPublicKey();
             HashMap<String, Object> payload = new HashMap<>();
             boolean usingPassword = false;
             if(data.containsKey("token")){
@@ -99,7 +130,7 @@ public class SocketHandler implements Runnable {
                         break;
                 }
             }
-        } catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException exception) {
+        } catch (IOException | ClassNotFoundException | NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException exception) {
         exception.printStackTrace();
     }
     }

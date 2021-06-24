@@ -60,18 +60,6 @@ public class RSAUtil {
         return new String(cipher.doFinal(decoder.decode(string)), StandardCharsets.UTF_8);
     }
 
-    public static String encrypt(PublicKey publicKey, byte[] content) throws NoSuchPaddingException, NotFileException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException, IOException {
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        return encoder.encodeToString(cipher.doFinal(content));
-    }
-
-    public static byte[] decryptBytes(PrivateKey privateKey, String string) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        return cipher.doFinal(decoder.decode(string));
-    }
-
     public static PrivateKey readPrivateFromFile(File file) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(Files.readAllBytes(file.toPath()));
         return KeyFactory.getInstance("RSA").generatePrivate(spec);

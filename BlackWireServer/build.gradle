@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'application'
+    id "com.github.johnrengelman.shadow" version "6.1.0"
 }
 
 group 'me.mrfunny.blackwire.server'
@@ -7,6 +9,10 @@ version '1.0'
 
 repositories {
     mavenCentral()
+}
+
+shadow {
+    mainClassName = "me.mrfunny.blackwire.server.Main"
 }
 
 dependencies {
