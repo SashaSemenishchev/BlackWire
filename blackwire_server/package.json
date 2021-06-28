@@ -1,0 +1,22 @@
+{
+  "name": "blackwire_server",
+  "version": "1.0.0",
+  "description": "An server implementation for BlackWire messenger",
+  "main": "main.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/SashaSemenishchev/BlackWire"
+  },
+  "keywords": [
+    "blackwire"
+  ],
+  "author": "MisterFunny01",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "cryptico": "^1.0.2",
+    "ws": "^7.5.0"
+  }
+}
