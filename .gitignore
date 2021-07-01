@@ -58,3 +58,4 @@ buck-out/
 # CocoaPods
 *.exe
 blackwire/out/*
+blackwire_server/logs/

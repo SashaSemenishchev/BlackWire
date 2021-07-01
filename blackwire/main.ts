@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipc } = require('electron')
 const path = require('path')
 const cryptico = require("crypto")
 const fs = require("fs")
@@ -7,10 +7,11 @@ const homedir = require('os').homedir();
 // @ts-ignore
 const WebSocket = require('ws'); // webstorm bug
 
+
 function createWindow () {
     const mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1350,
+        height: 780,
         webPreferences: {
             preload: path.join(__dirname, 'preload.ts')
         },
@@ -18,7 +19,7 @@ function createWindow () {
     })
 
     mainWindow.removeMenu()
-    mainWindow.loadFile('index.html')
+    mainWindow.loadFile('templates/index.html')
     app.setBadgeCount(1)
 }
 
@@ -46,7 +47,10 @@ ws.onmessage = data => {
     if(received == null){
         return
     }
-
-    console.log(received.user)
+    if("status" in received){
+        if(received.status === "show_ip"){
+            console.warn("This server is collects your ip address")
+        }
+    }
 }
 
